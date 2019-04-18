@@ -39,6 +39,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\..\..\corefx\artifacts\bin\System.Text.Json\netcoreapp-Windows_NT-Release\System.Text.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="coreclr\BenchmarksGame\Inputs\*.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -86,9 +92,9 @@
     <Compile Remove="coreclr\Math\Functions\Single\ScaleB.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.0'">
+  <!--<ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp3.0'">
     <Compile Remove="corefx\System.Text.Json\Utf8JsonWriter\*.cs" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <Compile Remove="corefx\System.Drawing\Perf_Graphics*.cs" />
