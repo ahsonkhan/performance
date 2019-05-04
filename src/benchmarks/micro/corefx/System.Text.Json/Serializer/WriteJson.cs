@@ -29,20 +29,16 @@ namespace System.Text.Json.Serialization.Tests
         }
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         public string SerializeToString() => JsonSerializer.ToString(_value);
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
         [Benchmark]
-        public byte[] SerializeToUtf8Bytes() => JsonSerializer.ToBytes(_value);
+        public string Jil_() => Jil.JSON.Serialize<T>(_value);
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
         [Benchmark]
-        public async Task SerializeToStream()
-        {
-            _memoryStream.Position = 0;
-            await JsonSerializer.WriteAsync(_value, _memoryStream);
-        }
+        public string Utf8Json_() => Utf8Json.JsonSerializer.ToJsonString(_value);
 
         [GlobalCleanup]
         public void Cleanup()

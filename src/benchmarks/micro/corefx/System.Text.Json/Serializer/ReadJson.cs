@@ -35,21 +35,16 @@ namespace System.Text.Json.Serialization.Tests
         }
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         public T DeserializeFromString() => JsonSerializer.Parse<T>(_serialized);
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
         [Benchmark]
-        public T DeserializeFromUtf8Bytes() => JsonSerializer.Parse<T>(_utf8Serialized);
+        public T Jil_() => Jil.JSON.Deserialize<T>(_serialized);
 
-        [BenchmarkCategory(Categories.CoreCLR, Categories.CoreFX, Categories.JsonSerializer)]
+        [BenchmarkCategory(Categories.CoreFX, Categories.JSON, Categories.JsonSerializer)]
         [Benchmark]
-        public async Task<T> DeserializeFromStream()
-        {
-            _memoryStream.Position = 0;
-            T value = await JsonSerializer.ReadAsync<T>(_memoryStream);
-            return value;
-        }
+        public T Utf8Json_() => Utf8Json.JsonSerializer.Deserialize<T>(_serialized);
 
         [GlobalCleanup]
         public void Cleanup() => _memoryStream.Dispose();
