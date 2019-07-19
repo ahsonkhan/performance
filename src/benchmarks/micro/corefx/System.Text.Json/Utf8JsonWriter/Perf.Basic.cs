@@ -3,116 +3,101 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Buffers;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
 using MicroBenchmarks;
 
 namespace System.Text.Json.Tests
 {
+
+    internal class BufferSegment<T> : ReadOnlySequenceSegment<T>
+    {
+        public BufferSegment(System.ReadOnlyMemory<T> memory)
+        {
+            Memory = memory;
+        }
+
+        public BufferSegment<T> Append(System.ReadOnlyMemory<T> memory)
+        {
+            var segment = new BufferSegment<T>(memory)
+            {
+                RunningIndex = RunningIndex + Memory.Length
+            };
+            Next = segment;
+            return segment;
+        }
+    }
+
     [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
     public class Perf_Basic
     {
-        private static readonly byte[] ExtraArrayUtf8 = Encoding.UTF8.GetBytes("ExtraArray");
-        private static readonly byte[] FirstUtf8 = Encoding.UTF8.GetBytes("first");
-        private static readonly byte[] LastUtf8 = Encoding.UTF8.GetBytes("last");
-        private static readonly byte[] AgeUtf8 = Encoding.UTF8.GetBytes("age");
-        private static readonly byte[] PhoneNumbersUtf8 = Encoding.UTF8.GetBytes("phoneNumbers");
-        private static readonly byte[] AddressUtf8 = Encoding.UTF8.GetBytes("address");
-        private static readonly byte[] StreetUtf8 = Encoding.UTF8.GetBytes("street");
-        private static readonly byte[] CityUtf8 = Encoding.UTF8.GetBytes("city");
-        private static readonly byte[] ZipUtf8 = Encoding.UTF8.GetBytes("zip");
+        private ReadOnlySequence<byte> _sequence;
+        private ReadOnlySequence<byte> _multiSegmentSequence;
+        private SequencePosition _start;
+        private SequencePosition _end;
+        private SequencePosition _ms_start;
+        private SequencePosition _ms_end;
 
-        private ArrayBufferWriter<byte> _arrayBufferWriter;
-
-        private int[] _numberArrayValues;
-
-        [Params(true, false)]
-        public bool Formatted;
-
-        [Params(true, false)]
-        public bool SkipValidation;
-
-        [Params(10, 100_000)]
-        public int DataSize;
+        private byte[] _jsonData;
+        private JsonReaderOptions _options;
+        private JsonReaderState _state;
 
         [GlobalSetup]
         public void Setup()
         {
-            _arrayBufferWriter = new ArrayBufferWriter<byte>();
+            Memory<byte> memory = new Memory<byte>(Enumerable.Repeat((byte)1, 10000).ToArray());
+            _sequence = new ReadOnlySequence<byte>(memory);
+            _start = _sequence.GetPosition(10);
+            _end = _sequence.GetPosition(9990);
 
-            var random = new Random(42);
+            BufferSegment<byte> firstSegment = new BufferSegment<byte>(memory.Slice(0, memory.Length / 2));
+            BufferSegment<byte> secondSegment = firstSegment.Append(memory.Slice(memory.Length / 2, memory.Length / 2));
+            _multiSegmentSequence = new ReadOnlySequence<byte>(firstSegment, 0, secondSegment, firstSegment.Memory.Length);
+            _ms_start = _multiSegmentSequence.GetPosition(10);
+            _ms_end = _multiSegmentSequence.GetPosition(9990);
 
-            _numberArrayValues = new int[DataSize];
-
-            for (int i = 0; i < DataSize; i++)
+            _jsonData = new byte[1000];
+            _options = new JsonReaderOptions
             {
-                _numberArrayValues[i] = random.Next(-10000, 10000);
-            }
+                AllowTrailingCommas = true
+            };
+            _state = new JsonReaderState(_options);
         }
 
         [Benchmark]
-        public void WriteBasicUtf8()
+        public Utf8JsonReader CtorBasic()
         {
-            _arrayBufferWriter.Clear();
-            using (var json = new Utf8JsonWriter(_arrayBufferWriter, new JsonWriterOptions { Indented = Formatted, SkipValidation = SkipValidation }))
-            {
-
-                json.WriteStartObject();
-                json.WriteNumber(AgeUtf8, 42);
-                json.WriteString(FirstUtf8, "John");
-                json.WriteString(LastUtf8, "Smith");
-                json.WriteStartArray(PhoneNumbersUtf8);
-                json.WriteStringValue("425-000-1212");
-                json.WriteStringValue("425-000-1213");
-                json.WriteEndArray();
-                json.WriteStartObject(AddressUtf8);
-                json.WriteString(StreetUtf8, "1 Microsoft Way");
-                json.WriteString(CityUtf8, "Redmond");
-                json.WriteNumber(ZipUtf8, 98052);
-                json.WriteEndObject();
-
-                json.WriteStartArray(ExtraArrayUtf8);
-                for (int i = 0; i < DataSize; i++)
-                {
-                    json.WriteNumberValue(_numberArrayValues[i]);
-                }
-                json.WriteEndArray();
-
-                json.WriteEndObject();
-                json.Flush();
-            }
+            return new Utf8JsonReader(_sequence);
         }
 
         [Benchmark]
-        public void WriteBasicUtf16()
+        public Utf8JsonReader CtorMultiBasic()
         {
-            _arrayBufferWriter.Clear();
-            using (var json = new Utf8JsonWriter(_arrayBufferWriter, new JsonWriterOptions { Indented = Formatted, SkipValidation = SkipValidation }))
-            {
+            return new Utf8JsonReader(_multiSegmentSequence, _options);
+        }
 
-                json.WriteStartObject();
-                json.WriteNumber("age", 42);
-                json.WriteString("first", "John");
-                json.WriteString("last", "Smith");
-                json.WriteStartArray("phoneNumbers");
-                json.WriteStringValue("425-000-1212");
-                json.WriteStringValue("425-000-1213");
-                json.WriteEndArray();
-                json.WriteStartObject("address");
-                json.WriteString("street", "1 Microsoft Way");
-                json.WriteString("city", "Redmond");
-                json.WriteNumber("zip", 98052);
-                json.WriteEndObject();
+        [Benchmark]
+        public Utf8JsonReader Ctor()
+        {
+            return new Utf8JsonReader(_sequence, _options);
+        }
 
-                json.WriteStartArray("ExtraArray");
-                for (int i = 0; i < DataSize; i++)
-                {
-                    json.WriteNumberValue(_numberArrayValues[i]);
-                }
-                json.WriteEndArray();
+        [Benchmark]
+        public Utf8JsonReader CtorWithState()
+        {
+            return new Utf8JsonReader(_sequence, isFinalBlock: true, state: _state);
+        }
 
-                json.WriteEndObject();
-                json.Flush();
-            }
+        [Benchmark]
+        public Utf8JsonReader CtorMulti()
+        {
+            return new Utf8JsonReader(_multiSegmentSequence, _options);
+        }
+
+        [Benchmark]
+        public Utf8JsonReader CtorWithStateMulti()
+        {
+            return new Utf8JsonReader(_multiSegmentSequence, isFinalBlock: true, state: _state);
         }
     }
 }

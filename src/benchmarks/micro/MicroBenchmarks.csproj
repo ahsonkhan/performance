@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="$(MSBuildThisFileDirectory)\..\..\common.props" />
 
@@ -34,6 +34,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\harness\BenchmarkDotNet.Extensions\BenchmarkDotNet.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\..\..\corefx\artifacts\bin\System.Text.Json\netcoreapp-Release\System.Text.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
