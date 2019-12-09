@@ -10,7 +10,7 @@ namespace MicroBenchmarks.Serializers
     [GenericTypeArguments(typeof(Location))]
     [GenericTypeArguments(typeof(IndexViewModel))]
     [GenericTypeArguments(typeof(MyEventsListerViewModel))]
-    [GenericTypeArguments(typeof(CollectionsOfPrimitives))]
+    [GenericTypeArguments(typeof(JsonMessage))]
     public class Json_ToString<T>
     {
         private readonly T value;

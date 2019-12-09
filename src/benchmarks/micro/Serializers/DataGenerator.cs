@@ -49,7 +49,8 @@ namespace MicroBenchmarks.Serializers
                 return (T)(object)new ArrayList(ValuesGenerator.ArrayOfUniqueValues<string>(100));
             if (typeof(T) == typeof(Hashtable))
                 return (T)(object)new Hashtable(ValuesGenerator.ArrayOfUniqueValues<string>(100).ToDictionary(value => value));
-
+            if (typeof(T) == typeof(JsonMessage))
+                return (T)(object)CreateJsonMessage();
 
             throw new NotImplementedException();
         }
@@ -60,6 +61,12 @@ namespace MicroBenchmarks.Serializers
                 Email = "name.familyname@not.com",
                 Password = "abcdefgh123456!@",
                 RememberMe = true
+            };
+
+        private static JsonMessage CreateJsonMessage()
+            => new JsonMessage
+            {
+                message = "Hello, World!"
             };
 
         private static Location CreateLocation()
@@ -354,6 +361,11 @@ namespace MicroBenchmarks.Serializers
         [ProtoMember(3)] [Key(2)] public Dictionary<int, string> Dictionary { get; set; }
         
         [ProtoMember(4)] [Key(3)] public List<int> ListOfInt { get; set; }
+    }
+
+    public struct JsonMessage
+    {
+        public string message { get; set; }
     }
     
     public struct SimpleStructWithProperties

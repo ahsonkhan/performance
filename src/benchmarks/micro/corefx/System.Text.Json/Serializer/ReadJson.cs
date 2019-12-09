@@ -44,15 +44,19 @@ namespace System.Text.Json.Serialization.Tests
         }
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
+        [Benchmark (Baseline = true)]
+        public T JsonNET_DeserializeFromString() => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(_serialized);
+
+        [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
         [Benchmark]
         public T DeserializeFromString() => JsonSerializer.Deserialize<T>(_serialized);
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
-        [Benchmark]
+        //[Benchmark]
         public T DeserializeFromUtf8Bytes() => JsonSerializer.Deserialize<T>(_utf8Serialized);
 
         [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
-        [Benchmark]
+        //[Benchmark]
         public async Task<T> DeserializeFromStream()
         {
             _memoryStream.Position = 0;

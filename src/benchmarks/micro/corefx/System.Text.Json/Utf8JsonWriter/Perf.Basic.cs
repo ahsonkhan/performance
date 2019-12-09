@@ -9,7 +9,7 @@ using MicroBenchmarks;
 namespace System.Text.Json.Tests
 {
     [BenchmarkCategory(Categories.CoreFX, Categories.JSON)]
-    public class Perf_Basic
+    public class Perf_Basic_Writer
     {
         private static readonly byte[] ExtraArrayUtf8 = Encoding.UTF8.GetBytes("ExtraArray");
         private static readonly byte[] FirstUtf8 = Encoding.UTF8.GetBytes("first");
@@ -25,13 +25,13 @@ namespace System.Text.Json.Tests
 
         private int[] _numberArrayValues;
 
-        [Params(true, false)]
+        [Params(false)]
         public bool Formatted;
 
-        [Params(true, false)]
+        [Params(true)]
         public bool SkipValidation;
 
-        [Params(10, 100_000)]
+        [Params(10)]
         public int DataSize;
 
         [GlobalSetup]
@@ -49,38 +49,38 @@ namespace System.Text.Json.Tests
             }
         }
 
-        [Benchmark]
-        public void WriteBasicUtf8()
-        {
-            _arrayBufferWriter.Clear();
-            using (var json = new Utf8JsonWriter(_arrayBufferWriter, new JsonWriterOptions { Indented = Formatted, SkipValidation = SkipValidation }))
-            {
+        //[Benchmark]
+        //public void WriteBasicUtf8()
+        //{
+        //    _arrayBufferWriter.Clear();
+        //    using (var json = new Utf8JsonWriter(_arrayBufferWriter, new JsonWriterOptions { Indented = Formatted, SkipValidation = SkipValidation }))
+        //    {
 
-                json.WriteStartObject();
-                json.WriteNumber(AgeUtf8, 42);
-                json.WriteString(FirstUtf8, "John");
-                json.WriteString(LastUtf8, "Smith");
-                json.WriteStartArray(PhoneNumbersUtf8);
-                json.WriteStringValue("425-000-1212");
-                json.WriteStringValue("425-000-1213");
-                json.WriteEndArray();
-                json.WriteStartObject(AddressUtf8);
-                json.WriteString(StreetUtf8, "1 Microsoft Way");
-                json.WriteString(CityUtf8, "Redmond");
-                json.WriteNumber(ZipUtf8, 98052);
-                json.WriteEndObject();
+        //        json.WriteStartObject();
+        //        json.WriteNumber(AgeUtf8, 42);
+        //        json.WriteString(FirstUtf8, "John");
+        //        json.WriteString(LastUtf8, "Smith");
+        //        json.WriteStartArray(PhoneNumbersUtf8);
+        //        json.WriteStringValue("425-000-1212");
+        //        json.WriteStringValue("425-000-1213");
+        //        json.WriteEndArray();
+        //        json.WriteStartObject(AddressUtf8);
+        //        json.WriteString(StreetUtf8, "1 Microsoft Way");
+        //        json.WriteString(CityUtf8, "Redmond");
+        //        json.WriteNumber(ZipUtf8, 98052);
+        //        json.WriteEndObject();
 
-                json.WriteStartArray(ExtraArrayUtf8);
-                for (int i = 0; i < DataSize; i++)
-                {
-                    json.WriteNumberValue(_numberArrayValues[i]);
-                }
-                json.WriteEndArray();
+        //        json.WriteStartArray(ExtraArrayUtf8);
+        //        for (int i = 0; i < DataSize; i++)
+        //        {
+        //            json.WriteNumberValue(_numberArrayValues[i]);
+        //        }
+        //        json.WriteEndArray();
 
-                json.WriteEndObject();
-                json.Flush();
-            }
-        }
+        //        json.WriteEndObject();
+        //        json.Flush();
+        //    }
+        //}
 
         [Benchmark]
         public void WriteBasicUtf16()
